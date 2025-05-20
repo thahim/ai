@@ -1,1 +1,184 @@
-hi
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Photo Editing Masters</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f2f2f2;
+      text-align: center;
+    }
+    header img {
+      width: 100%;
+      max-height: 250px;
+      object-fit: cover;
+    }
+    h1 {
+      margin: 20px 0;
+      color: #333;
+    }
+    .container {
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+    }
+    input[type="file"] {
+      margin: 10px 0;
+    }
+    canvas {
+      margin-top: 20px;
+      max-width: 100%;
+    }
+    button {
+      margin: 10px;
+      padding: 10px 20px;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #218838;
+    }
+    footer {
+      margin-top: 40px;
+      background: #333;
+      color: white;
+      padding: 20px;
+      font-size: 14px;
+    }
+    footer img {
+      width: 80px;
+      border-radius: 50%;
+      margin-top: 10px;
+    }
+    @media(max-width: 600px) {
+      h1 {
+        font-size: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <img src="https://github.com/thahim/ai/blob/main/header.jpg" alt="AI Photo Editing Masters"/>
+  </header>
+
+  <h1>AI Photo Editing Masters</h1>
+  <div class="container">
+    <p>Upload Foreground and Background Images</p>
+    <input type="file" id="foreground" accept="image/*" /><br />
+    <input type="file" id="background" accept="image/*" /><br />
+    <button onclick="replaceBackground()">Replace Background</button>
+    <button onclick="applyEffects()">Apply AI Effects</button>
+    <button onclick="downloadImage()">Download Final Image</button>
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <footer>
+    Developed by Engineer/Aggriculturist Assistant Director, Minorities Affairs Department Government of Sindh,<br/>
+    <strong>Saad Thahim</strong>, Owner/Partner Sindh Cotton Ginning Oil Mills.
+    <br/><img src="https://github.com/thahim/ai/blob/main/dp.jpg" alt="Saad Thahim"/>
+  </footer>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    async function replaceBackground() {
+      const fgFile = document.getElementById('foreground').files[0];
+      const bgFile = document.getElementById('background').files[0];
+
+      if (!fgFile) return alert("Please upload a foreground image.");
+
+      const fgImg = await loadImage(URL.createObjectURL(fgFile));
+      const bgImg = bgFile ? await loadImage(URL.createObjectURL(bgFile)) : null;
+
+      canvas.width = fgImg.width;
+      canvas.height = fgImg.height;
+
+      // Draw background if available
+      if (bgImg) {
+        ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+
+      // Process foreground (remove white/light background)
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = fgImg.width;
+      tempCanvas.height = fgImg.height;
+      const tempCtx = tempCanvas.getContext('2d');
+      tempCtx.drawImage(fgImg, 0, 0);
+
+      const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+      for (let i = 0; i < imageData.data.length; i += 4) {
+        const r = imageData.data[i];
+        const g = imageData.data[i + 1];
+        const b = imageData.data[i + 2];
+
+        // If it's white or very light, make transparent
+        if (r > 220 && g > 220 && b > 220) {
+          imageData.data[i + 3] = 0;
+        }
+      }
+      tempCtx.putImageData(imageData, 0, 0);
+
+      // Draw cleaned foreground on top
+      ctx.drawImage(tempCanvas, 0, 0);
+    }
+
+    function applyEffects() {
+      if (!canvas.width) return alert("Please generate an image first.");
+
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+
+      for (let i = 0; i < data.length; i += 4) {
+        // Contrast and brightness enhancement
+        data[i] = Math.min(255, data[i] * 1.1);     // R
+        data[i + 1] = Math.min(255, data[i + 1] * 1.2); // G
+        data[i + 2] = Math.min(255, data[i + 2] * 1.1); // B
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+
+      // Disco glare effects
+      ctx.globalAlpha = 0.2;
+      for (let i = 0; i < 25; i++) {
+        ctx.beginPath();
+        ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, Math.random() * 30, 0, 2 * Math.PI);
+        ctx.fillStyle = `hsl(${Math.random() * 360}, 100%, 60%)`;
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function downloadImage() {
+      if (!canvas.width) return alert("No image to download.");
+      const link = document.createElement('a');
+      link.download = 'edited-image.png';
+      link.href = canvas.toDataURL();
+      link.click();
+    }
+
+    function loadImage(src) {
+      return new Promise(resolve => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.src = src;
+      });
+    }
+  </script>
+</body>
+</html>
+
